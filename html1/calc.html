@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .calculator {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 320px;
+        }
+        .display input {
+            width: 100%;
+            height: 60px;
+            font-size: 28px;
+            text-align: right;
+            padding: 0 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-family: monospace;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #e9ecef;
+            border: none;
+            font-size: 24px;
+            padding: 15px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #d4d8dd;
+        }
+        .operator {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .equals {
+            background: #0d6efd;
+            color: white;
+        }
+        .equals:hover {
+            background: #0b5ed7;
+        }
+        .history {
+            border-top: 1px solid #dee2e6;
+            padding-top: 15px;
+        }
+        .history h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .history-list div {
+            padding: 5px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .clear-history {
+            background: #dc3545;
+            color: white;
+            font-size: 14px;
+            padding: 8px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .clear-history:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+<div class="calculator">
+    <div class="display">
+        <input type="text" id="expression" placeholder="0">
+    </div>
+    <div class="buttons">
+        <button class="digit">7</button>
+        <button class="digit">8</button>
+        <button class="digit">9</button>
+        <button class="operator">/</button>
+
+        <button class="digit">4</button>
+        <button class="digit">5</button>
+        <button class="digit">6</button>
+        <button class="operator">*</button>
+
+        <button class="digit">1</button>
+        <button class="digit">2</button>
+        <button class="digit">3</button>
+        <button class="operator">-</button>
+
+        <button class="digit">0</button>
+        <button class="clear">C</button>
+        <button class="equals">=</button>
+        <button class="operator">+</button>
+    </div>
+    <div class="history">
+        <h3>История действий</h3>
+        <div class="history-list" id="history-list"></div>
+        <button id="clear-history-btn" class="clear-history">Очистить историю</button>
+    </div>
+</div>
+
+<script>
+    // Получение элементов
+    const expressionInput = document.getElementById('expression');
+    const historyContainer = document.getElementById('history-list');
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
+
+    // Функция добавления записи в историю
+    function addToHistory(entry) {
+        const historyItem = document.createElement('div');
+        historyItem.textContent = entry;
+        historyContainer.appendChild(historyItem);
+        // Автоматическая прокрутка вниз
+        historyContainer.scrollTop = historyContainer.scrollHeight;
+    }
+
+    // Функция очистки истории
+    function clearHistory() {
+        historyContainer.innerHTML = '';
+    }
+
+    // Функция вычисления выражения с проверкой деления на ноль и некорректных результатов
+    function calculateExpression(expr) {
+        try {
+            // Очищаем выражение от недопустимых символов (разрешаем цифры, операторы, точки, скобки)
+            const sanitized = expr.replace(/[^-()\d/*+.]/g, '');
+            if (sanitized === '') throw new Error('Пустое выражение');
+            
+            // Вычисляем результат
+            const result = eval(sanitized);
+            
+            if (!isFinite(result)) {
+                throw new Error('Деление на ноль');
+            }
+            
+            // Округляем до 10 знаков
+            const rounded = Math.round(result * 1e10) / 1e10;
+            return rounded;
+        } catch (e) {
+            if (e.message === 'Деление на ноль') {
+                return 'Ошибка: деление на ноль';
+            }
+            return 'Ошибка: ' + e.message;
+        }
+    }
+
+    // Обработчик для цифр и операторов
+    const digits = document.querySelectorAll('.digit');
+    const operators = document.querySelectorAll('.operator');
+    const equalsBtn = document.querySelector('.equals');
+    const clearBtn = document.querySelector('.clear');
+
+    // Добавление символа в поле ввода
+    function appendToExpression(value) {
+        expressionInput.value += value;
+    }
+
+    digits.forEach(btn => {
+        btn.addEventListener('click', () => {
+            appendToExpression(btn.textContent);
+        });
+    });
+
+    operators.forEach(btn => {
+        btn.addEventListener('click', () => {
+            appendToExpression(btn.textContent);
+        });
+    });
+
+    // Кнопка очистки поля
+    clearBtn.addEventListener('click', () => {
+        expressionInput.value = '';
+    });
+
+    // Кнопка "="
+    equalsBtn.addEventListener('click', () => {
+        let expr = expressionInput.value;
+        if (expr === '') return;
+        const result = calculateExpression(expr);
+        const historyEntry = `${expr} = ${result}`;
+        addToHistory(historyEntry);
+        expressionInput.value = '';
+    });
+
+    // Очистка истории
+    clearHistoryBtn.addEventListener('click', () => {
+        clearHistory();
+    });
+
+    // Возможность ввода с клавиатуры
+    expressionInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            equalsBtn.click();
+        }
+    });
+</script>
+</body>
+</html>
